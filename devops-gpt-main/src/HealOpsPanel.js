@@ -188,7 +188,38 @@ function HealOpsPanel() {
             <h3 className="modal-title">
               Analysis for <span className="modal-pod-name">{analyzingPod.name}</span>
             </h3>
-
+            {/* Responsibility summary section */}
+            {analysis && (() => {
+              const results = analysis?.analysis?.results;
+              if (results && Array.isArray(results)) {
+                const podResult = results.find(
+                  (r) => r.kind === 'Pod' && r.name?.includes(analyzingPod?.name)
+                );
+                if (podResult && podResult.responsibility) {
+                  return (
+                    <div style={{
+                      background: '#f3f4f6',
+                      border: '2px solid #d1d5db',
+                      borderRadius: '0.75em',
+                      padding: '1em',
+                      marginBottom: '1.5em',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1em',
+                      fontSize: '1.1em',
+                    }}>
+                      <span style={{ fontWeight: 700 }}>Responsibility:</span>
+                      <span style={{
+                        color: podResult.responsibility === 'DevOps' ? 'green' : podResult.responsibility === 'Developer' ? 'purple' : 'gray',
+                        fontWeight: 'bold',
+                        fontSize: '1.1em',
+                      }}>{podResult.responsibility}</span>
+                    </div>
+                  );
+                }
+              }
+              return null;
+            })()}
             {!analysis ? (
               <div className="modal-loading">Analyzing...</div>
             ) : (

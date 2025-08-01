@@ -128,7 +128,11 @@ const App = () => {
       </aside>
       {/* Main Content Split */}
       <div className="flex-1 flex flex-row h-screen">
-        {/* Left: DevOps GPT Chat */}
+        {/* Left: HealOps Panel */}
+        <div style={{ width: '40%', borderRight: '2px solid #e5e7eb', background: '#f8fafc', overflowY: 'auto' }}>
+          <HealOpsPanel />
+        </div>
+        {/* Right: DevOps GPT Chat */}
         <div className="flex-1 flex flex-col" style={{ maxWidth: '60%' }}>
           {/* Header */}
           <header className="sticky top-0 z-10 py-5 px-8 bg-gradient-to-r from-purple-600 via-pink-500 to-red-400 text-white shadow flex items-center justify-between">
@@ -304,10 +308,6 @@ const App = () => {
               Clear
             </button>
           </form>
-        </div>
-        {/* Right: HealOps Panel */}
-        <div style={{ width: '40%', borderLeft: '2px solid #e5e7eb', background: '#f8fafc', overflowY: 'auto' }}>
-          <HealOpsPanel />
         </div>
       </div>
       <style>{`
