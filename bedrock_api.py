@@ -24,7 +24,7 @@ app.add_middleware(
 # AWS Bedrock client - using environment variables for security
 bedrock_client = boto3.client(
     service_name='bedrock-runtime',
-    region_name='us-east-1',  # Change to your preferred region
+    region_name='ap-south-1',  # Change to your preferred region
 )
 
 class ChatMessage(BaseModel):
@@ -33,7 +33,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
-    model: str = "amazon.titan-text-express-v1"  # Titan Text Express
+    model: str = "anthropic.claude-3-sonnet-20240229-v1:0"  # Default to Claude 3.5 Sonnet
     max_tokens: int = 500
     temperature: float = 0.3
 
@@ -158,28 +158,7 @@ async def chat_with_bedrock(request: ChatRequest):
                 raise HTTPException(status_code=500, detail="No response content from Bedrock")
 
     except Exception as e:
-        # If there's an access denied error, return a mock response for testing
-        if "AccessDeniedException" in str(e):
-            mock_response = """I can help you with Kubernetes troubleshooting! Here are some common steps to debug issues:
-
-1. **Check pod status**: `kubectl get pods -n <namespace>`
-2. **View pod logs**: `kubectl logs <pod-name> -n <namespace>`
-3. **Describe pod**: `kubectl describe pod <pod-name> -n <namespace>`
-4. **Check events**: `kubectl get events -n <namespace>`
-
-For your specific issue, could you share:
-- The pod name and namespace
-- Any error messages you're seeing
-- The current pod status
-
-This will help me provide more targeted assistance!"""
-            
-            return ChatResponse(
-                response=mock_response,
-                model=request.model
-            )
-        else:
-            raise HTTPException(status_code=500, detail=f"Error calling Bedrock: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error calling Bedrock: {str(e)}")
 
 @app.get("/api/models")
 async def get_available_models():
@@ -188,7 +167,7 @@ async def get_available_models():
         # Create a separate client for listing models
         bedrock_control_client = boto3.client(
             service_name='bedrock',
-            region_name='us-east-1'
+            region_name='ap-south-1'
         )
         
         # List available models

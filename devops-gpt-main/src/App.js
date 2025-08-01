@@ -76,7 +76,7 @@ const App = () => {
         },
         body: JSON.stringify({
           messages: messages,
-          model: "amazon.titan-text-express-v1",
+          model: "anthropic.claude-3-sonnet-20240229-v1:0",
           max_tokens: 500,
           temperature: 0.3
         })
