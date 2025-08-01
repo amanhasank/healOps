@@ -3,10 +3,11 @@ from kubernetes import client, config
 from pydantic import BaseModel
 import subprocess
 import json
+from collections import Counter
 
 app = FastAPI()
 
-# Load kube config (assumes running locally or inside a pod with access)
+# Load Kubernetes config (local or in-cluster)
 try:
     config.load_kube_config()
 except:
@@ -24,8 +25,7 @@ def get_pods():
     unhealthy = []
 
     try:
-       # pods = v1.list_pod_for_all_namespaces()
-        pods = v1.list_namespaced_pod(namespace="app")
+        pods = v1.list_namespaced_pod(namespace="app")  # You can change this to a parameter if needed
         for pod in pods.items:
             pod_name = pod.metadata.name
             namespace = pod.metadata.namespace
@@ -68,31 +68,35 @@ def analyze_pod(pod_request: AnalyzeRequest):
             "raw_output": raw_output
         }
 
-    # If analysis is a string, wrap it
-    if isinstance(analysis, str):
-        return {
-            "pod": pod_request.pod_name,
-            "analysis": analysis
-        }
+    # Define responsibility classifier
+    def classify_responsibility(text: str) -> str:
+        text = text.lower()
+        if any(word in text for word in ["image", "readiness", "liveness", "probe", "http", "container", "crash", "application", "404"]):
+            return "Developer"
+        elif any(word in text for word in ["node", "network", "quota", "scheduler", "affinity", "taint", "resource", "rbac", "permission", "oomkilled"]):
+            return "DevOps"
+        return "Unknown"
 
-    # If analysis is a list of dicts, filter by pod name and add responsibility
-    def classify_responsibility(item):
-        text = (str(item.get('error', '')) + ' ' + str(item.get('details', ''))).lower()
-        if any(word in text for word in ['image', 'code', 'application']):
-            return 'Developer'
-        if any(word in text for word in ['node', 'network', 'quota', 'resource', 'permission']):
-            return 'DevOps'
-        return 'Unknown'
+    responsibility_counter = Counter()
 
-    if isinstance(analysis, list):
-        filtered_output = [
-            {**item, 'responsibility': classify_responsibility(item)}
-            for item in analysis if pod_request.pod_name in item.get('name', '')
-        ]
+    if isinstance(analysis, dict) and 'results' in analysis and isinstance(analysis['results'], list):
+        for item in analysis['results']:
+            # Combine all error texts and details for this result
+            error_texts = ' '.join(err.get('Text', '') for err in item.get('error', []))
+            details = item.get('details', '')
+            combined_text = error_texts + ' ' + details
+            responsibility = classify_responsibility(combined_text)
+            item['responsibility'] = responsibility
+            responsibility_counter[responsibility] += 1
+        filtered_output = analysis
     else:
-        filtered_output = analysis  # fallback
+        filtered_output = {
+            "message": "No valid results found in k8sgpt output",
+            "raw_analysis": analysis
+        }
 
     return {
         "pod": pod_request.pod_name,
-        "analysis": filtered_output or "No analysis found for the pod"
+        "analysis": filtered_output,
+        "responsibility_summary": dict(responsibility_counter)
     }

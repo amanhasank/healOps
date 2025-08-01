@@ -27,6 +27,25 @@ const App = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
+  // Listen for Ask GPT events from HealOpsPanel
+  useEffect(() => {
+    function handleHealopsToGpt(event) {
+      if (event.data && event.data.type === 'HEALOPS_TO_GPT') {
+        const appended = event.data.payload + '\n\nProvide me solution along with exact commands to fix this issue.';
+        setUserInput(appended);
+        setTimeout(() => {
+          inputRef.current?.focus();
+          // Automatically send the message
+          setTimeout(() => {
+            sendMessage();
+          }, 0);
+        }, 0);
+      }
+    }
+    window.addEventListener('message', handleHealopsToGpt);
+    return () => window.removeEventListener('message', handleHealopsToGpt);
+  }, []);
+
   // Dummy sendMessage for demo
   const sendMessage = async () => {
     if (!userInput.trim()) return;
@@ -44,7 +63,7 @@ const App = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer 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"
+          "Authorization": "Bearer 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"
         },
         body: JSON.stringify({
           model: "mistralai/mixtral-8x7b-instruct", // or another model from their docs
@@ -95,7 +114,7 @@ const App = () => {
       <aside className="hidden md:flex flex-col w-64 bg-gradient-to-b from-blue-700 to-purple-700 text-white py-8 px-6 shadow-lg">
         <div className="flex items-center gap-3 mb-8">
           <span className="text-3xl">⚡</span>
-          <span className="text-2xl font-bold tracking-tight">DevOps GPT</span>
+          <span className="text-2xl font-bold tracking-tight">HealOps GPT</span>
         </div>
         <button
           className="mb-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded transition"

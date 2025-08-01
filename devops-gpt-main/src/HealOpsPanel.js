@@ -75,7 +75,7 @@ function HealOpsPanel() {
             <pre className="main-pod-issue-solution">{details}</pre>
           </div>
         )}
-        {responsibility && (
+        {/* {responsibility && (
           <div style={{ marginTop: '0.5em' }}>
             <strong>Responsibility:</strong>{' '}
             <span
@@ -87,7 +87,7 @@ function HealOpsPanel() {
               {responsibility}
             </span>
           </div>
-        )}
+        )} */}
       </div>
     );
   }
@@ -188,35 +188,66 @@ function HealOpsPanel() {
             <h3 className="modal-title">
               Analysis for <span className="modal-pod-name">{analyzingPod.name}</span>
             </h3>
-            {/* Responsibility summary section */}
-            {analysis && (() => {
+            {/* Always show Responsibility and Ask GPT at the top if podResult exists */}
+            {(() => {
               const results = analysis?.analysis?.results;
+              let podResult = null;
               if (results && Array.isArray(results)) {
-                const podResult = results.find(
+                podResult = results.find(
                   (r) => r.kind === 'Pod' && r.name?.includes(analyzingPod?.name)
                 );
-                if (podResult && podResult.responsibility) {
-                  return (
-                    <div style={{
-                      background: '#f3f4f6',
-                      border: '2px solid #d1d5db',
-                      borderRadius: '0.75em',
-                      padding: '1em',
-                      marginBottom: '1.5em',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1em',
-                      fontSize: '1.1em',
-                    }}>
+              }
+              if (podResult) {
+                return (
+                  <div style={{
+                    background: '#f3f4f6',
+                    border: '2px solid #d1d5db',
+                    borderRadius: '0.75em',
+                    padding: '1em',
+                    marginBottom: '1.5em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1em',
+                    fontSize: '1.1em',
+                    justifyContent: 'space-between',
+                  }}>
+                    <div>
                       <span style={{ fontWeight: 700 }}>Responsibility:</span>
                       <span style={{
                         color: podResult.responsibility === 'DevOps' ? 'green' : podResult.responsibility === 'Developer' ? 'purple' : 'gray',
                         fontWeight: 'bold',
                         fontSize: '1.1em',
-                      }}>{podResult.responsibility}</span>
+                        marginLeft: '0.5em',
+                      }}>{podResult.responsibility || 'Unknown'}</span>
                     </div>
-                  );
-                }
+                    <button
+                      style={{
+                        background: '#2563eb',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '0.5em',
+                        padding: '0.5em 1.2em',
+                        fontWeight: 600,
+                        fontSize: '1em',
+                        cursor: 'pointer',
+                        marginLeft: 'auto',
+                      }}
+                      onClick={() => {
+                        let content = `Pod: ${podResult.name}\nResponsibility: ${podResult.responsibility || 'Unknown'}`;
+                        if (Array.isArray(podResult.error) && podResult.error.length > 0) {
+                          content += `\nError: ${podResult.error[0].Text}`;
+                        }
+                        if (podResult.details) {
+                          content += `\nHow to fix: ${podResult.details.trim()}`;
+                        }
+                        window.postMessage({ type: 'HEALOPS_TO_GPT', payload: content }, '*');
+                        setShowModal(false);
+                      }}
+                    >
+                      Ask GPT
+                    </button>
+                  </div>
+                );
               }
               return null;
             })()}
