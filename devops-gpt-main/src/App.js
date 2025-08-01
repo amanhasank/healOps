@@ -46,7 +46,7 @@ const App = () => {
     return () => window.removeEventListener('message', handleHealopsToGpt);
   }, []);
 
-  // Dummy sendMessage for demo
+  // Send message using AWS Bedrock
   const sendMessage = async () => {
     if (!userInput.trim()) return;
     setIsLoading(true);
@@ -58,42 +58,49 @@ const App = () => {
     ]);
 
     try {
-      // Call your backend or OpenAI API
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      // Prepare messages for Bedrock API
+      const messages = [
+        { role: "system", content: "You are a DevOps expert. Give concise, step-by-step Kubernetes/EKS troubleshooting answers with commands and short explanations." },
+        ...chatHistory.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text })),
+        { role: "user", content: userInput }
+      ];
+
+      // Call our Bedrock backend API
+      const response = await fetch("http://localhost:8000/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer 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"
         },
         body: JSON.stringify({
-          model: "mistralai/mixtral-8x7b-instruct", // or another model from their docs
-          messages: [
-            { role: "system", content: "You are a DevOps expert. Give concise, step-by-step Kubernetes/EKS troubleshooting answers with commands and short explanations." },
-            ...chatHistory.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text })),
-            { role: "user", content: userInput }
-          ],
+          messages: messages,
+          model: "amazon.titan-text-express-v1",
           max_tokens: 500,
           temperature: 0.3
         })
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
-      if (data.error) {
+      
+      if (data.response) {
         setChatHistory((prev) => [
           ...prev,
-          { role: "model", text: `❌ Error: ${data.error.message}` }
+          { role: "model", text: data.response }
         ]);
       } else {
-        const assistantText = data.choices?.[0]?.message?.content || "Sorry, I couldn't generate a response.";
-
         setChatHistory((prev) => [
           ...prev,
-          { role: "model", text: assistantText }
+          { role: "model", text: "Sorry, I couldn't generate a response." }
         ]);
       }
     } catch (err) {
+      console.error("Error calling Bedrock API:", err);
       setChatHistory((prev) => [
         ...prev,
-        { role: "model", text: "❌ Error: Unable to fetch answer. Please try again." }
+        { role: "model", text: "❌ Error: Unable to fetch answer. Please check if the backend server is running and AWS credentials are configured." }
       ]);
     }
 

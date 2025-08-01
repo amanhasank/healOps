@@ -2,3 +2,6 @@ fastapi
 uvicorn
 subprocess-run
 kubernetes
+boto3
+pydantic
+python-dotenv
