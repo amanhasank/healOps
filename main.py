@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from kubernetes import client, config
 from pydantic import BaseModel
 import subprocess
@@ -100,3 +101,18 @@ def analyze_pod(pod_request: AnalyzeRequest):
         "analysis": filtered_output,
         "responsibility_summary": dict(responsibility_counter)
     }
+
+@app.post("/run_kubectl")
+async def run_kubectl(request: Request):
+    data = await request.json()
+    command = data.get("command", "")
+    if not command.strip().startswith("kubectl "):
+        return JSONResponse({"error": "Only kubectl commands are allowed."}, status_code=400)
+    try:
+        result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
+        if result.returncode == 0:
+            return {"output": result.stdout.strip()}
+        else:
+            return {"error": result.stderr.strip() or "Unknown error"}
+    except Exception as e:
+        return {"error": str(e)}

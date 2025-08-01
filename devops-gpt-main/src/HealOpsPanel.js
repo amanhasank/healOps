@@ -139,8 +139,55 @@ function HealOpsPanel() {
   }
 
   return (
-    <div className="app-bg">
-      <h1 className="app-title">HealOps - Kubernetes AI Analyzer</h1>
+    <div className="app-bg" style={{ marginTop: 0, paddingTop: 0 }}>
+      <div style={{
+        background: 'linear-gradient(90deg, #6366f1 0%, #ec4899 100%)',
+        color: '#fff',
+        padding: '0.7rem 1.2rem',
+        margin: '0 0 1rem 0',
+        boxShadow: '0 4px 24px rgba(99,102,241,0.10)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative'
+      }}>
+        <span style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '-1px', marginRight: '0.5rem' }}>🩺</span>
+        <span style={{ fontSize: '1.1rem', fontWeight: 700, letterSpacing: '-1px', textShadow: '0 2px 8px rgba(0,0,0,0.10)' }}>
+          HealOps - Kubernetes AI Analyzer
+        </span>
+        <button
+          onClick={() => {
+            setLoading(true);
+            fetch('/pods')
+              .then((res) => res.json())
+              .then((data) => {
+                setPods(data);
+                setLoading(false);
+              });
+          }}
+          title="Refresh pods"
+          style={{
+            position: 'absolute',
+            right: '1.2rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: '#e0f2fe',
+            color: '#2563eb',
+            border: 'none',
+            borderRadius: '50%',
+            width: '2.2rem',
+            height: '2.2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: '1.3rem',
+            boxShadow: '0 1px 4px rgba(59,130,246,0.08)'
+          }}
+        >
+          &#x21bb;
+        </button>
+      </div>
 
       {loading ? (
         <div className="loading">Loading pods...</div>
@@ -168,7 +215,21 @@ function HealOpsPanel() {
                     <span className="pod-name">{pod.name}</span>
                     <span className="pod-namespace">({pod.namespace})</span>
                   </div>
-                  <button className="analyze-btn" onClick={() => handleAnalyze(pod)}>
+                  <button
+                    style={{
+                      background: '#3b82f6',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '0.5em',
+                      padding: '0.5em 1.2em',
+                      fontWeight: 600,
+                      fontSize: '1em',
+                      cursor: 'pointer',
+                      marginLeft: 'auto',
+                      boxShadow: '0 1px 4px rgba(59,130,246,0.08)'
+                    }}
+                    onClick={() => handleAnalyze(pod)}
+                  >
                     Analyze
                   </button>
                 </li>
