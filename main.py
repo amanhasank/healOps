@@ -75,9 +75,20 @@ def analyze_pod(pod_request: AnalyzeRequest):
             "analysis": analysis
         }
 
-    # If analysis is a list of dicts, filter by pod name
+    # If analysis is a list of dicts, filter by pod name and add responsibility
+    def classify_responsibility(item):
+        text = (str(item.get('error', '')) + ' ' + str(item.get('details', ''))).lower()
+        if any(word in text for word in ['image', 'code', 'application']):
+            return 'Developer'
+        if any(word in text for word in ['node', 'network', 'quota', 'resource', 'permission']):
+            return 'DevOps'
+        return 'Unknown'
+
     if isinstance(analysis, list):
-        filtered_output = [item for item in analysis if pod_request.pod_name in item.get("name", "")]
+        filtered_output = [
+            {**item, 'responsibility': classify_responsibility(item)}
+            for item in analysis if pod_request.pod_name in item.get('name', '')
+        ]
     else:
         filtered_output = analysis  # fallback
 
