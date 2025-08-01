@@ -11,9 +11,10 @@ def setup_credentials():
     print("=" * 40)
     
     # Get credentials from user
-    access_key = input("Enter your AWS Access Key ID (AKIA5ZSC3SETS5QZGQNM): ").strip()
+    access_key = input("Enter your AWS Access Key ID: ").strip()
     if not access_key:
-        access_key = "AKIA5ZSC3SETS5QZGQNM"
+        print("❌ Access key is required!")
+        return False
     
     secret_key = getpass.getpass("Enter your AWS Secret Access Key: ").strip()
     
@@ -22,16 +23,6 @@ def setup_credentials():
         return False
     
     # Create .env file with credentials (bedrock_api.py now uses environment variables)
-    env_content = f"""AWS_ACCESS_KEY_ID={access_key}
-AWS_SECRET_ACCESS_KEY={secret_key}
-AWS_DEFAULT_REGION=us-east-1
-"""
-    
-    env_file = Path(".env")
-    env_file.write_text(env_content)
-    print("✅ Created .env file with credentials")
-    
-    # Also create a .env file for additional security
     env_content = f"""AWS_ACCESS_KEY_ID={access_key}
 AWS_SECRET_ACCESS_KEY={secret_key}
 AWS_DEFAULT_REGION=us-east-1
