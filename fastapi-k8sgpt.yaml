@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: k8sgpt
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-k8sgpt
+  namespace: k8sgpt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastapi-k8sgpt
+  template:
+    metadata:
+      labels:
+        app: fastapi-k8sgpt
+    spec:
+      containers:
+        - name: fastapi
+          image: your-repo/fastapi-k8sgpt:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KUBERNETES_SERVICE_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastapi-k8sgpt
+  namespace: k8sgpt
+spec:
+  selector:
+    app: fastapi-k8sgpt
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+
