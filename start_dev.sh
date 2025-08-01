@@ -5,10 +5,19 @@ echo "================================================"
 
 # Check if Python dependencies are installed
 echo "📦 Checking Python dependencies..."
-if ! python3 -c "import fastapi, boto3, uvicorn" 2>/dev/null; then
-    echo "Installing Python dependencies..."
-    pip3 install -r requirements.txt
+# inside start_dev.sh before installing Python dependencies
+
+if [ ! -d "venv" ]; then
+  echo "🐍 Creating virtual environment..."
+  python3 -m venv venv
 fi
+
+echo "📦 Activating virtual environment..."
+source venv/bin/activate
+
+echo "📦 Installing Python dependencies..."
+pip install uvicorn
+pip install -r requirements.txt
 
 # Check if Node.js dependencies are installed
 echo "📦 Checking Node.js dependencies..."
@@ -25,12 +34,18 @@ if [ ! -f ".env" ]; then
     python3 setup_credentials.py
 fi
 
-# Start the backend server
-echo "🔧 Starting backend server..."
-python3 bedrock_api.py &
-BACKEND_PID=$!
+# Start the backend servers
+echo "🔧 Starting HealOps backend (main.py) on port 8000..."
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
+HEALOPS_BACKEND_PID=$!
 
-# Wait a moment for backend to start
+sleep 2
+
+echo "🤖 Starting Bedrock API backend (bedrock_api.py) on port 8001..."
+uvicorn bedrock_api:app --host 0.0.0.0 --port 8001 --reload &
+BEDROCK_BACKEND_PID=$!
+
+# Wait a moment for backends to start
 sleep 3
 
 # Start the frontend server
@@ -49,7 +64,8 @@ echo "Press Ctrl+C to stop both servers"
 cleanup() {
     echo ""
     echo "🛑 Stopping servers..."
-    kill $BACKEND_PID 2>/dev/null
+    kill $HEALOPS_BACKEND_PID 2>/dev/null
+    kill $BEDROCK_BACKEND_PID 2>/dev/null
     kill $FRONTEND_PID 2>/dev/null
     exit 0
 }

@@ -69,14 +69,10 @@ const App = () => {
       ];
 
       // Call our Bedrock backend API
-      const response = await fetch("http://localhost:8000/api/chat", {
+      const response = await fetch("http://localhost:8001/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-<<<<<<< HEAD
-=======
-          "Authorization": "Bearer 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"
->>>>>>> main
         },
         body: JSON.stringify({
           messages: messages,
