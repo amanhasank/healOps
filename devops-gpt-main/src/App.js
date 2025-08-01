@@ -21,6 +21,9 @@ const App = () => {
   const inputRef = useRef(null);
   const [expandedIndexes, setExpandedIndexes] = useState({});
   const [darkMode, setDarkMode] = useState(false);
+  const [terminalInput, setTerminalInput] = useState("");
+  const [terminalOutput, setTerminalOutput] = useState("");
+  const [terminalLoading, setTerminalLoading] = useState(false);
 
   // Scroll to the bottom of the chat history whenever it updates
   useEffect(() => {
@@ -63,7 +66,7 @@ const App = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer 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"
+          "Authorization": "Bearer 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"
         },
         body: JSON.stringify({
           model: "mistralai/mixtral-8x7b-instruct", // or another model from their docs
@@ -99,6 +102,24 @@ const App = () => {
 
     setUserInput("");
     setIsLoading(false);
+  };
+
+  const runKubectlCommand = async () => {
+    if (!terminalInput.trim()) return;
+    setTerminalLoading(true);
+    setTerminalOutput("");
+    try {
+      const res = await fetch('/run_kubectl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: terminalInput })
+      });
+      const data = await res.json();
+      setTerminalOutput(data.output || data.error || JSON.stringify(data));
+    } catch (err) {
+      setTerminalOutput("Error running command: " + String(err));
+    }
+    setTerminalLoading(false);
   };
 
   // Handle Enter key press in the input field
@@ -327,6 +348,41 @@ const App = () => {
               Clear
             </button>
           </form>
+
+          <div style={{ margin: '0', paddingBottom: '1rem', background: '#e0f2fe', borderRadius: '0.7rem', color: '#18181b', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+            <div style={{ fontWeight: 700, marginBottom: '0.5rem', fontSize: '1.1rem', color: '#2563eb' }}>Cluster Terminal</div>
+            <form
+              onSubmit={e => { e.preventDefault(); runKubectlCommand(); }}
+              style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}
+            >
+              <input
+                type="text"
+                value={terminalInput}
+                onChange={e => setTerminalInput(e.target.value)}
+                placeholder="kubectl ..."
+                style={{ flex: 1, padding: '0.5rem 1rem', borderRadius: '0.4rem', border: 'none', fontSize: '1rem', color: '#18181b', background: '#fff' }}
+                disabled={terminalLoading}
+              />
+              <button
+                type="submit"
+                style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '0.4rem', padding: '0.5rem 1.2rem', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 1px 4px rgba(59,130,246,0.08)' }}
+                disabled={terminalLoading}
+              >
+                {terminalLoading ? 'Running...' : 'Run'}
+              </button>
+              <button
+                type="button"
+                style={{ background: '#e0f2fe', color: '#2563eb', border: 'none', borderRadius: '0.4rem', padding: '0.5rem 1.2rem', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 1px 4px rgba(59,130,246,0.04)' }}
+                onClick={() => setTerminalOutput("")}
+                disabled={terminalLoading && !terminalOutput}
+              >
+                Clear
+              </button>
+            </form>
+            {terminalOutput && (
+              <pre style={{ background: '#f0f9ff', color: '#2563eb', borderRadius: '0.4rem', padding: '1rem', marginTop: '1rem', fontSize: '0.97rem', whiteSpace: 'pre-wrap', border: '1px solid #bae6fd', maxHeight: '250px', overflowY: 'auto' }}>{terminalOutput}</pre>
+            )}
+          </div>
         </div>
       </div>
       <style>{`
