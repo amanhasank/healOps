@@ -305,7 +305,7 @@ function HealOpsPanel() {
                         setShowModal(false);
                       }}
                     >
-                      Ask GPT
+                      Ask HealOps
                     </button>
                   </div>
                 );
